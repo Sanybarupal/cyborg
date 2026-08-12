@@ -106,6 +106,19 @@ function initWebSocket() {
         try {
             const data = JSON.parse(e.data);
             handleServerEvent(data);
+            
+            // Auto-speak response text using TTS
+            if (data.text && 'speechSynthesis' in window) {
+                try {
+                    const utterance = new SpeechSynthesisUtterance(data.text);
+                    utterance.rate = 1.0;
+                    utterance.pitch = 1.0;
+                    utterance.volume = 1.0;
+                    speechSynthesis.speak(utterance);
+                } catch (ttsErr) {
+                    console.log('[TTS Error]:', ttsErr);
+                }
+            }
         } catch (err) {
             console.error('[WS Parse Error]:', err);
         }
