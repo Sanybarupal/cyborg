@@ -38,40 +38,48 @@
     <!-- ═══ THREE-COLUMN JARVIS HUD LAYOUT ═══ -->
     <main class="hud-layout">
 
-        <!-- ── LEFT PANEL: REAL SYSTEM TELEMETRY & RECENT WORK ── -->
+        <!-- ── LEFT PANEL: REAL SYSTEM TELEMETRY, HEALTH & QUICK ACTIONS ── -->
         <aside class="hud-panel hud-panel-left">
             <div class="panel-section-title">
                 <span class="title-icon">⚡</span> SYSTEM TELEMETRY
             </div>
             <div class="telemetry-box" id="telemetryBox">
-                <div class="meter-row">
-                    <div class="meter-head">
-                        <span class="meter-label">CPU LOAD</span>
-                        <span class="meter-value" id="cpuVal">0%</span>
-                    </div>
-                    <div class="meter-track"><div class="meter-bar meter-cyan" id="cpuFill" style="width:0%"></div></div>
-                </div>
-                <div class="meter-row">
-                    <div class="meter-head">
-                        <span class="meter-label">MEMORY (RAM)</span>
-                        <span class="meter-value" id="ramVal">0%</span>
-                    </div>
-                    <div class="meter-track"><div class="meter-bar meter-green" id="ramFill" style="width:0%"></div></div>
-                </div>
-                <div class="meter-row">
-                    <div class="meter-head">
-                        <span class="meter-label">STORAGE (C:)</span>
-                        <span class="meter-value" id="diskVal">0%</span>
-                    </div>
-                    <div class="meter-track"><div class="meter-bar meter-amber" id="diskFill" style="width:0%"></div></div>
-                </div>
-                <div class="meter-row">
-                    <div class="meter-head">
-                        <span class="meter-label">BATTERY</span>
-                        <span class="meter-value" id="battVal">100%</span>
-                    </div>
-                    <div class="meter-track"><div class="meter-bar meter-purple" id="battFill" style="width:0%"></div></div>
-                </div>
+                <!-- Keep small CPU/RAM meters if we want, or replace entirely. The prompt asked for "Create a dedicated left-side panel". Let's put the meters then the health. -->
+                <div class="meter-row"><div class="meter-head"><span class="meter-label">CPU LOAD</span><span class="meter-value" id="cpuVal">0%</span></div><div class="meter-track"><div class="meter-bar meter-cyan" id="cpuFill" style="width:0%"></div></div></div>
+                <div class="meter-row"><div class="meter-head"><span class="meter-label">MEMORY (RAM)</span><span class="meter-value" id="ramVal">0%</span></div><div class="meter-track"><div class="meter-bar meter-green" id="ramFill" style="width:0%"></div></div></div>
+                <div class="meter-row"><div class="meter-head"><span class="meter-label">STORAGE (C:)</span><span class="meter-value" id="diskVal">0%</span></div><div class="meter-track"><div class="meter-bar meter-amber" id="diskFill" style="width:0%"></div></div></div>
+                <div class="meter-row"><div class="meter-head"><span class="meter-label">BATTERY</span><span class="meter-value" id="battVal">100%</span></div><div class="meter-track"><div class="meter-bar meter-cyan" id="battFill" style="width:100%"></div></div></div>
+            </div>
+
+            <div class="panel-section-title" style="margin-top:20px;">
+                <span class="title-icon">🏥</span> SYSTEM HEALTH & ERRORS
+            </div>
+            <div class="system-health-grid" id="systemHealthGrid">
+                <!-- Modules will be populated by JS: Microphone, STT, AI, Backend, Agent, etc. -->
+                <div class="health-item"><span class="h-dot h-gray" id="h_mic"></span> Microphone</div>
+                <div class="health-item"><span class="h-dot h-gray" id="h_stt"></span> STT / Voice</div>
+                <div class="health-item"><span class="h-dot h-gray" id="h_tts"></span> TTS Engine</div>
+                <div class="health-item"><span class="h-dot h-gray" id="h_ai"></span> AI Core</div>
+                <div class="health-item"><span class="h-dot h-gray" id="h_backend"></span> Backend</div>
+                <div class="health-item"><span class="h-dot h-gray" id="h_router"></span> Tool Router</div>
+                <div class="health-item"><span class="h-dot h-gray" id="h_agent"></span> Windows Agent</div>
+                <div class="health-item"><span class="h-dot h-gray" id="h_quick"></span> Quick Actions</div>
+                <div class="health-item"><span class="h-dot h-gray" id="h_browser"></span> Browser Auto</div>
+                <div class="health-item"><span class="h-dot h-gray" id="h_ocr"></span> Screen/OCR</div>
+                <div class="health-item"><span class="h-dot h-gray" id="h_fs"></span> File System</div>
+                <div class="health-item"><span class="h-dot h-gray" id="h_sys"></span> Overall System</div>
+            </div>
+
+            <div class="panel-section-title" style="margin-top:20px;">
+                <span class="title-icon">⚡</span> QUICK ACTIONS
+            </div>
+            <div class="quick-directives-grid">
+                <button class="quick-btn" onclick="sendCmd('WhatsApp kholo')">Open WhatsApp</button>
+                <button class="quick-btn" onclick="sendCmd('YouTube open karo')">Open YouTube</button>
+                <button class="quick-btn" onclick="sendCmd('Chrome kholo')">Open Chrome</button>
+                <button class="quick-btn" onclick="sendCmd('Notepad open karo')">Open Notepad</button>
+                <button class="quick-btn" onclick="sendCmd('VS Code kholo')">Open VS Code</button>
+                <button class="quick-btn" onclick="sendCmd('System status batao')">System Status</button>
             </div>
 
             <div class="panel-section-title" style="margin-top:20px;">
@@ -138,14 +146,15 @@
                     <span class="hud-response-text" id="hudResponseText">All systems nominal. How may I assist you, Sandeep?</span>
                 </div>
 
-                <!-- Step Execution Tracker -->
+                <!-- Step Execution Tracker (Diagnostics) -->
                 <div class="hud-task-tracker" id="taskTracker" style="display:none;">
                     <div class="tracker-header">
-                        <span class="tracker-title" id="ttTitle">EXECUTING DIRECTIVE</span>
-                        <span class="tracker-count" id="ttCount">0/0</span>
+                        <span class="tracker-title" id="ttTitle">COMMAND DIAGNOSTICS</span>
                     </div>
-                    <div class="tracker-bar"><div class="tracker-fill" id="ttFill"></div></div>
-                    <div class="tracker-step-desc" id="ttStep">Processing...</div>
+                    <div class="diagnostic-flow" id="diagFlow">
+                        <!-- e.g. LISTENING -> COMMAND RECEIVED -> UNDERSTANDING -> TOOL -> WINDOWS AGENT -> VERIFYING -> COMPLETED -->
+                    </div>
+                    <div class="tracker-step-desc" id="ttStep" style="margin-top:10px;">Processing...</div>
                 </div>
             </div>
 
@@ -181,15 +190,11 @@
             </div>
 
             <div class="panel-section-title" style="margin-top:20px;">
-                <span class="title-icon">📡</span> QUICK DIRECTIVES
+                <span class="title-icon">🛑</span> SYSTEM ERROR LOGS
             </div>
-            <div class="quick-directives-grid">
-                <button class="quick-btn" onclick="sendCmd('WhatsApp kholo')">Open WhatsApp</button>
-                <button class="quick-btn" onclick="sendCmd('YouTube open karo')">Open YouTube</button>
-                <button class="quick-btn" onclick="sendCmd('Chrome kholo')">Open Chrome</button>
-                <button class="quick-btn" onclick="sendCmd('Notepad open karo')">Open Notepad</button>
-                <button class="quick-btn" onclick="sendCmd('VS Code kholo')">Open VS Code</button>
-                <button class="quick-btn" onclick="sendCmd('System status batao')">System Status</button>
+            <div class="error-logs-container" id="errorLogsContainer">
+                <!-- Errors will inject here -->
+                <div class="sched-empty">No critical system errors.</div>
             </div>
         </aside>
 

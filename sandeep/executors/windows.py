@@ -256,7 +256,11 @@ class WindowsExecutor:
 
         if not launched:
             print("[RESULT] FAILED TO LAUNCH")
-            return {"success": False, "message": f"Could not find or open '{app_name}'. Application not installed or not found."}
+            return {
+                "success": False, 
+                "message": f"Could not find or open '{app_name}'. Application not installed or not found.",
+                "fix": f"Install {app_name} or add its path to WindowsExecutor.APP_MAP."
+            }
 
         # Web-only apps have no local process to verify
         if candidates and all(e.get("type") == "url" for e in candidates):
@@ -273,7 +277,11 @@ class WindowsExecutor:
             return {"success": True, "message": f"Opened {app_name}."}
 
         print("[RESULT] VERIFICATION FAILED - Process not detected")
-        return {"success": False, "message": f"Launched {app_name} but could not verify it opened. Try checking your desktop."}
+        return {
+            "success": False, 
+            "message": f"Launched {app_name} but could not verify it opened. Try checking your desktop.",
+            "fix": "Ensure the application runs visibly and isn't blocked by Windows permissions."
+        }
 
     def _search_and_launch(self, app_name: str) -> dict:
         """Fallback: search Start Menu shortcuts."""
@@ -329,14 +337,22 @@ class WindowsExecutor:
 
         if still_running:
             print("[RESULT] VERIFICATION FAILED - Still running")
-            return {"success": False, "message": f"Failed to close {app_name}. It may still be running."}
+            return {
+                "success": False, 
+                "message": f"Failed to close {app_name}. It may still be running.",
+                "fix": "Close the application manually or run SANDEEP as Administrator."
+            }
 
         if count > 0:
             print("[RESULT] SUCCESS")
             return {"success": True, "message": f"Closed {app_name} ({count} process(es) terminated)."}
 
         print("[RESULT] FAILED - Not found")
-        return {"success": False, "message": f"'{app_name}' was not running."}
+        return {
+            "success": False, 
+            "message": f"'{app_name}' was not running.",
+            "fix": "No action needed, the application is already closed."
+        }
 
     # ── Volume Control ───────────────────────────────────────────────
     def volume_up(self, _=None) -> dict:

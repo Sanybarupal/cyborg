@@ -141,11 +141,18 @@ function handleServerEvent(d) {
         case 'status':
             setHUDState('PROCESSING DIRECTIVE', d.text);
             if (d.command) hudCommandText.textContent = `"${d.command}"`;
+            updateDiagnosticFlow('UNDERSTANDING', 'active');
             break;
 
         case 'error':
             showSystemError(d.message || d.text);
             setHUDState('SYSTEM ERROR', 'Task execution failed');
+            addErrorLog({
+                module: d.module || 'SYSTEM',
+                message: d.message || d.text,
+                fix: d.fix || 'Check system status'
+            });
+            updateDiagnosticFlow('VERIFYING', 'error');
             break;
 
         case 'action':
@@ -154,15 +161,27 @@ function handleServerEvent(d) {
             if (d.command) hudCommandText.textContent = `"${d.command}"`;
             showTracker(d.text, planTotal);
             setHUDState('EXECUTING DIRECTIVE', `${planTotal} action(s) scheduled`);
+            updateDiagnosticFlow('TOOL ROUTER', 'active');
             break;
 
         case 'executing':
             updateTracker(d.text);
+            updateDiagnosticFlow('WINDOWS AGENT', 'active');
             break;
 
         case 'step_result':
             planDone++;
-            updateTrackerBar(planDone, planTotal);
+            // updateTrackerBar(planDone, planTotal); // UI removed
+            if (d.success) {
+                updateDiagnosticFlow('VERIFYING', 'done');
+            } else {
+                updateDiagnosticFlow('VERIFYING', 'error');
+                addErrorLog({
+                    module: 'VERIFICATION',
+                    message: d.message || 'Verification failed',
+                    fix: d.fix || 'Check if action completed'
+                });
+            }
             break;
 
         case 'response':
@@ -170,6 +189,7 @@ function handleServerEvent(d) {
             if (d.command) hudCommandText.textContent = `"${d.command}"`;
             hudResponseText.textContent = d.text;
             setHUDState('TASK COMPLETED', 'All directives executed');
+            updateDiagnosticFlow('COMPLETED', 'done');
 
             if (d.audio) {
                 playAudioResponse(d.audio);
@@ -179,6 +199,10 @@ function handleServerEvent(d) {
                 }, 3000);
             }
             fetchSystemStatus();
+            break;
+            
+        case 'health_update':
+            updateSystemHealth(d.health);
             break;
     }
 }
@@ -204,19 +228,40 @@ function setHUDState(state, sub) {
 function showTracker(title, total) {
     taskTracker.style.display = 'block';
     ttTitle.textContent = title.toUpperCase();
-    ttCount.textContent = `0/${total}`;
-    ttFill.style.width = '0%';
     ttStep.textContent = 'Initializing execution pipeline...';
+    // Initialize flow
+    const flow = $('diagFlow');
+    if (flow) {
+        flow.innerHTML = `
+            <span class="diag-step done">LISTENING</span> →
+            <span class="diag-step done">COMMAND RECEIVED</span> →
+            <span class="diag-step active">UNDERSTANDING</span>
+        `;
+    }
 }
 
 function updateTracker(text) {
     ttStep.textContent = text;
 }
 
-function updateTrackerBar(done, total) {
-    const pct = total > 0 ? Math.round((done / total) * 100) : 0;
-    ttFill.style.width = `${pct}%`;
-    ttCount.textContent = `${done}/${total}`;
+function updateDiagnosticFlow(stepName, status) {
+    const flow = $('diagFlow');
+    if (!flow) return;
+    
+    // Add new step
+    const arrow = `<span style="color:#555"> → </span>`;
+    const newStep = `<span class="diag-step ${status}">${stepName}</span>`;
+    
+    // If it's a completion or error, just append
+    if (!flow.innerHTML.includes(stepName)) {
+        flow.innerHTML += arrow + newStep;
+    } else {
+        // Find existing and update class
+        flow.innerHTML = flow.innerHTML.replace(
+            new RegExp(`<span class="diag-step [^"]*">${stepName}<\/span>`),
+            `<span class="diag-step ${status}">${stepName}</span>`
+        );
+    }
 }
 
 function hideTracker() {
@@ -394,9 +439,53 @@ async function fetchSystemStatus() {
         } else {
             appList.innerHTML = '<span class="tag-empty">No prominent desktop apps</span>';
         }
+
+        if (d.health) {
+            updateSystemHealth(d.health);
+        }
     } catch (e) {
         console.error('[Telemetry fetch error]:', e);
     }
+}
+
+// ── System Health & Error Logs ──────────────────────────────────────
+function updateSystemHealth(healthData) {
+    // healthData: { mic: 'online', ai: 'warning', agent: 'error', ... }
+    const map = {
+        'online': 'h-green',
+        'warning': 'h-yellow',
+        'error': 'h-red',
+        'offline': 'h-gray'
+    };
+    for (let key in healthData) {
+        const el = $(`h_${key}`);
+        if (el) {
+            el.className = `h-dot ${map[healthData[key]] || 'h-gray'}`;
+        }
+    }
+}
+
+function addErrorLog(err) {
+    const container = $('errorLogsContainer');
+    if (!container) return;
+    
+    const time = new Date().toLocaleTimeString('en-IN', { hour12: true });
+    const logCard = document.createElement('div');
+    logCard.className = 'error-log-card';
+    logCard.innerHTML = `
+        <div class="error-log-header">
+            <span class="error-log-module">${err.module}</span>
+            <span class="error-log-time">${time}</span>
+        </div>
+        <div class="error-log-msg">${err.message}</div>
+        <div class="error-log-fix">FIX: ${err.fix}</div>
+    `;
+    
+    // Remove "No errors" placeholder if exists
+    const empty = container.querySelector('.sched-empty');
+    if (empty) container.removeChild(empty);
+    
+    container.prepend(logCard);
 }
 
 // ── Schedule / Directives ──────────────────────────────────────────

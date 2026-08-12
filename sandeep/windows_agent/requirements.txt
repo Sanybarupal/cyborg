@@ -1,0 +1,10 @@
+psutil
+pyttsx3
+SpeechRecognition
+pywin32
+pytesseract
+pillow
+pyautogui
+sounddevice
+schedule
+psutil

@@ -875,3 +875,104 @@ html, body {
     to { box-shadow: 0 0 25px rgba(255, 0, 50, 0.6); }
 }
 
+/* --- System Health Grid --- */
+.system-health-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    margin-bottom: 10px;
+}
+.health-item {
+    font-size: 11px;
+    font-family: var(--font-sub);
+    color: var(--txt-main);
+    display: flex;
+    align-items: center;
+    background: rgba(0, 0, 0, 0.2);
+    padding: 4px 6px;
+    border-radius: 4px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+.h-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    margin-right: 6px;
+    box-shadow: 0 0 5px currentColor;
+}
+.h-gray { background: #555; color: #555; }
+.h-green { background: #00ffcc; color: #00ffcc; }
+.h-yellow { background: #ffcc00; color: #ffcc00; }
+.h-red { background: #ff3366; color: #ff3366; }
+
+/* --- Diagnostic Flow --- */
+.diagnostic-flow {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+    margin-top: 8px;
+}
+.diag-step {
+    font-size: 10px;
+    font-family: var(--font-mono);
+    color: var(--txt-dim);
+    background: rgba(255, 255, 255, 0.05);
+    padding: 3px 6px;
+    border-radius: 3px;
+    border: 1px solid transparent;
+    opacity: 0.5;
+    transition: all 0.3s ease;
+}
+.diag-step.active {
+    color: var(--cyan);
+    border-color: var(--cyan);
+    opacity: 1;
+    box-shadow: 0 0 5px var(--cyan-dim);
+}
+.diag-step.done {
+    color: var(--green);
+    border-color: var(--green);
+    opacity: 1;
+}
+.diag-step.error {
+    color: var(--red);
+    border-color: var(--red);
+    opacity: 1;
+    box-shadow: 0 0 5px rgba(255, 51, 102, 0.4);
+}
+
+/* --- Error Logs Panel --- */
+.error-logs-container {
+    max-height: 250px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+.error-log-card {
+    background: rgba(255, 0, 50, 0.1);
+    border-left: 3px solid var(--red);
+    padding: 8px;
+    border-radius: 4px;
+    font-size: 11px;
+}
+.error-log-header {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 4px;
+}
+.error-log-module {
+    font-weight: 700;
+    color: var(--red);
+}
+.error-log-time {
+    color: var(--txt-dim);
+}
+.error-log-msg {
+    color: #fff;
+    margin-bottom: 4px;
+}
+.error-log-fix {
+    color: var(--cyan);
+    font-style: italic;
+}

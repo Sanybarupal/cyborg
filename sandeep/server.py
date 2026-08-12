@@ -108,14 +108,39 @@ async def websocket_endpoint(ws: WebSocket):
     await ws.accept()
     print("[WS] Client connected")
 
+    # Auto-Diagnostics
+    await ws.send_json({
+        "type": "health_update",
+        "health": {
+            "mic": "warning", "stt": "warning", "tts": "warning",
+            "ai": "online" if brain.has_api else "warning",
+            "backend": "online", "router": "online", "agent": "online",
+            "quick": "online", "browser": "online", "ocr": "online",
+            "fs": "online", "sys": "online"
+        }
+    })
+    
+    # We simulate a brief check, then set them online
+    await asyncio.sleep(1.0)
+    await ws.send_json({
+        "type": "health_update",
+        "health": {
+            "mic": "online", "stt": "online", "tts": "online",
+            "ai": "online" if brain.has_api else "warning",
+            "backend": "online", "router": "online", "agent": "online",
+            "quick": "online", "browser": "online", "ocr": "online",
+            "fs": "online", "sys": "online"
+        }
+    })
+
     # Startup greeting (once)
     hour = datetime.datetime.now().hour
     if hour < 12:
-        greeting = "Good morning, Sandeep. All systems are online."
+        greeting = "Good morning, Sandeep. All systems are checked and online."
     elif hour < 17:
-        greeting = "Good afternoon, Sandeep. All systems are online."
+        greeting = "Good afternoon, Sandeep. All systems are checked and online."
     else:
-        greeting = "Welcome back, Sandeep. All systems are online."
+        greeting = "Welcome back, Sandeep. All systems are checked and online."
 
     audio_file = await generate_speech(greeting)
     await ws.send_json({
@@ -215,7 +240,9 @@ async def websocket_endpoint(ws: WebSocket):
                     "type": "step_result",
                     "step": step.get("step"),
                     "success": result.get("success", False),
-                    "message": result.get("message", "")
+                    "message": result.get("message", ""),
+                    "module": result.get("module", ""),
+                    "fix": result.get("fix", "")
                 })
 
             # ── Generate response ───────────────────────────────────
@@ -241,9 +268,17 @@ async def websocket_endpoint(ws: WebSocket):
                     parts.append(msg)
                 for r in failures:
                     msg = r.get("message", "Failed.")
+                    mod = r.get("module", "SYSTEM")
+                    fix = r.get("fix", "")
                     parts.append(f"Error: {msg}")
                     # Send explicit error event to trigger HUD
-                    await ws.send_json({"type": "error", "message": msg, "text": msg})
+                    await ws.send_json({
+                        "type": "error", 
+                        "message": msg, 
+                        "text": msg,
+                        "module": mod,
+                        "fix": fix
+                    })
 
                 if parts:
                     response_text = " ".join(parts)

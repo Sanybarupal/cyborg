@@ -26,9 +26,11 @@ Available actions:
 - ocr_screen (target: text to find, if any)
 - capture_screenshot
 - terminal_execute (target: command string)
+- whatsapp_send (target: contact_name, message: text)
+- whatsapp_read (target: contact_name)
 
 Respond with ONLY a JSON object:
-{"plan": [{"step": 1, "action": "open_app", "target": "whatsapp", "description": "Open WhatsApp"}]}
+{"plan": [{"step": 1, "action": "whatsapp_send", "target": "Mummy", "message": "I am fine", "description": "Send WhatsApp message"}]}
 If the command requires multiple steps, list them in order.
 If the command is just conversation (greeting, question), return: {"plan": []}
 """

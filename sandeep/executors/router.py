@@ -24,20 +24,40 @@ class ToolRouter:
 
         print(f"  [Router] Step {step.get('step', '?')}: {desc} (action={action}, target={target})")
 
-        if action in self.WINDOWS_ACTIONS:
-            result = self.windows.execute(action, target)
-        elif action in self.FILE_ACTIONS:
-            result = self.files.execute(action, target)
-        elif action in self.VISION_ACTIONS:
-            result = self.vision.execute(action, target)
-        elif action == "browser_search":
-            result = self._browser_search(target)
-        elif action == "browser_open":
-            result = self._browser_open(target)
-        elif action == "terminal_execute":
-            result = self._terminal_execute(target)
-        else:
-            result = {"success": False, "message": f"No executor found for action: {action}"}
+        try:
+            if action in self.WINDOWS_ACTIONS:
+                result = self.windows.execute(action, target)
+                module = "WINDOWS AGENT"
+            elif action in self.FILE_ACTIONS:
+                result = self.files.execute(action, target)
+                module = "FILE SYSTEM"
+            elif action in self.VISION_ACTIONS:
+                result = self.vision.execute(action, target)
+                module = "SCREEN/OCR"
+            elif action == "browser_search":
+                result = self._browser_search(target)
+                module = "BROWSER"
+            elif action == "browser_open":
+                result = self._browser_open(target)
+                module = "BROWSER"
+            elif action == "terminal_execute":
+                result = self._terminal_execute(target)
+                module = "TERMINAL"
+            else:
+                result = {"success": False, "message": f"No executor found for action: {action}"}
+                module = "TOOL ROUTER"
+                
+            if not result.get("success"):
+                result["module"] = result.get("module", module)
+                result["fix"] = result.get("fix", f"Check {module} configuration or logs.")
+                
+        except Exception as e:
+            result = {
+                "success": False,
+                "message": f"Unexpected execution error: {str(e)}",
+                "module": "TOOL ROUTER",
+                "fix": "Check backend server logs for exceptions."
+            }
 
         print(f"  [Router] Result: {result.get('message', 'N/A')}")
         return result
