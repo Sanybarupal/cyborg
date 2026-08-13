@@ -80,7 +80,9 @@ async def system_status():
         import psutil
         cpu = psutil.cpu_percent(interval=0.1)
         mem = psutil.virtual_memory()
-        disk = psutil.disk_usage("C:\\")
+        # Use the host's root filesystem; Windows deployments can still report C:\\ when available.
+        disk_path = "C:\\" if os.name == "nt" and os.path.exists("C:\\") else os.path.abspath(os.sep)
+        disk = psutil.disk_usage(disk_path)
         battery = psutil.sensors_battery()
 
         # Detect notable running apps
@@ -305,7 +307,7 @@ Do NOT use formal Hindi or overly long responses."""
             # ── Send plan ───────────────────────────────────────────
             print(f"[INTENT] {plan[0].get('action').upper() if plan else 'UNKNOWN'}")
             await ws.send_json({
-                "type": "plan",
+                "type": "action",
                 "text": f"Executing {len(plan)} step(s)...",
                 "command": command,
                 "steps": plan

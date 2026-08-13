@@ -144,5 +144,6 @@ def main():
         return 1
 
 if __name__ == '__main__':
-    os.chdir(Path(__file__).parent / 'sandeep')
+    # Run correctly whether invoked from the project root or sandeep/ itself.
+    os.chdir(Path(__file__).parent)
     sys.exit(main())

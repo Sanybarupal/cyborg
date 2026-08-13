@@ -110,14 +110,12 @@ class ToolRouter:
             return {"success": False, "message": f"Failed to open URL: {e}"}
 
     def _terminal_execute(self, command: str) -> dict:
-        import subprocess
-        if not command:
-            return {"success": False, "message": "No command provided."}
-        try:
-            result = subprocess.run(command, shell=True, capture_output=True, text=True, timeout=30)
-            output = result.stdout or result.stderr or "Command executed (no output)."
-            return {"success": result.returncode == 0, "message": output[:500]}
-        except subprocess.TimeoutExpired:
-            return {"success": False, "message": "Command timed out after 30 seconds."}
-        except Exception as e:
-            return {"success": False, "message": f"Terminal error: {e}"}
+        # Terminal execution is intentionally disabled until an authenticated,
+        # allowlisted command broker is provided. Never pass user input to a shell.
+        if command:
+            return {
+                "success": False,
+                "message": "Terminal execution is disabled for safety.",
+                "fix": "Use an authenticated allowlisted command broker.",
+            }
+        return {"success": False, "message": "No command provided."}

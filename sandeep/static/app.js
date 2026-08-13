@@ -13,6 +13,7 @@ let currentAudio = null;
 
 // ── DOM Elements ───────────────────────────────────────────────────
 const $ = id => document.getElementById(id);
+const escapeHtml = value => String(value ?? '').replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[char]));
 const aiState = $('aiState');
 const aiStateSub = $('aiStateSub');
 const aiStatusBadge = $('aiStatusBadge');
@@ -220,7 +221,7 @@ function handleServerEvent(d) {
     }
 }
 
-// ── HUD State Manager ──────────────────────────────────────────────
+// ── HUD State Manager ───────────��──────────────────────────────────
 function setHUDState(state, sub) {
     aiState.textContent = state;
     aiStateSub.textContent = sub || '';
@@ -439,8 +440,8 @@ async function fetchSystemStatus() {
         if (d.recent_actions && d.recent_actions.length > 0) {
             actionsList.innerHTML = d.recent_actions.map(a => `
                 <div class="action-entry ${a.success ? '' : 'fail'}">
-                    <span class="action-time">${a.time}</span>
-                    <span class="action-text">${a.action}</span>
+                    <span class="action-time">${escapeHtml(a.time)}</span>
+                    <span class="action-text">${escapeHtml(a.action)}</span>
                 </div>
             `).join('');
         }
@@ -487,11 +488,11 @@ function addErrorLog(err) {
     logCard.className = 'error-log-card';
     logCard.innerHTML = `
         <div class="error-log-header">
-            <span class="error-log-module">${err.module}</span>
-            <span class="error-log-time">${time}</span>
+            <span class="error-log-module">${escapeHtml(err.module)}</span>
+            <span class="error-log-time">${escapeHtml(time)}</span>
         </div>
-        <div class="error-log-msg">${err.message}</div>
-        <div class="error-log-fix">FIX: ${err.fix}</div>
+        <div class="error-log-msg">${escapeHtml(err.message)}</div>
+        <div class="error-log-fix">FIX: ${escapeHtml(err.fix)}</div>
     `;
     
     // Remove "No errors" placeholder if exists
@@ -529,7 +530,7 @@ function renderSchedule() {
     list.innerHTML = scheduleItems.map((item, i) => `
         <div class="sched-item">
             <div class="sched-check ${item.done ? 'done' : ''}" onclick="toggleSched(${i})">${item.done ? '&#10003;' : ''}</div>
-            <span class="sched-text" style="${item.done ? 'text-decoration:line-through;opacity:.5' : ''}">${item.text}</span>
+            <span class="sched-text" style="${item.done ? 'text-decoration:line-through;opacity:.5' : ''}">${escapeHtml(item.text)}</span>
             <span class="sched-del" onclick="delSched(${i})">&#10005;</span>
         </div>
     `).join('');
