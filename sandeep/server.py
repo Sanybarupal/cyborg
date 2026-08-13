@@ -412,5 +412,7 @@ Do NOT use formal Hindi or overly long responses."""
 
 if __name__ == '__main__':
     import uvicorn
-    uvicorn.run('server:app', host='127.0.0.1', port=9000, reload=True)
+    # Bind to the sandbox-provided port and all interfaces so the live preview can reach it.
+    port = int(os.environ.get('PORT', '9000'))
+    uvicorn.run('server:app', host='0.0.0.0', port=port, reload=False)
 
