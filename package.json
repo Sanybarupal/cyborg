@@ -1,0 +1,10 @@
+{
+  "name": "cyborg-sandeep-preview",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Preview launcher for the existing SANDEEP FastAPI application",
+  "scripts": {
+    "start": "sandeep/.audit-venv/bin/python sandeep/server.py",
+    "dev": "sandeep/.audit-venv/bin/python sandeep/server.py"
+  }
+}
