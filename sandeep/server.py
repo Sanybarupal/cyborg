@@ -20,6 +20,16 @@ from core.memory import memory
 from executors.router import ToolRouter
 from voice.speak import generate_speech
 
+# ── Hinglish AI Support ──────────────────────────────────────────
+try:
+    from hinglish_engine import hinglish_engine, HinglishEngine, HINGLISH_RESPONSES
+    from hinglish_tts import generate_hinglish_speech
+    HINGLISH_AVAILABLE = True
+    print("  [OK] Hinglish Engine (Multi-language voice support)")
+except ImportError as e:
+    HINGLISH_AVAILABLE = False
+    print(f"  [⚠] Hinglish Engine not available: {e}")
+
 # ── Initialize subsystems ───────────────────────────────────────────
 print("=" * 60)
 print("  SANDEEP - Personal AI Assistant")
@@ -153,6 +163,98 @@ async def websocket_endpoint(ws: WebSocket):
         while True:
             data = await ws.receive_text()
             msg = json.loads(data)
+            
+            # ══════ HINGLISH VOICE COMMAND HANDLER ═══════════════════════════
+            if msg.get("type") == "voice_command" and HINGLISH_AVAILABLE:
+                command_text = msg.get("text", "").strip()
+                context = msg.get("context", {})
+                
+                print(f"\n{'='*60}")
+                print(f"[HINGLISH VOICE] {command_text}")
+                
+                # Detect intent using Hinglish engine
+                intent, intent_data = hinglish_engine.detect_intent(command_text)
+                print(f"[INTENT] {intent} | {intent_data}")
+                
+                # Generate Hinglish response
+                if intent == 'open_app':
+                    app_name = intent_data.get('app')
+                    response = hinglish_engine.get_hinglish_response('app_opening', {'app': app_name})
+                    
+                    # Execute app opening
+                    result = await asyncio.to_thread(router.execute_step, {
+                        'action': 'open_app',
+                        'args': {'app': app_name}
+                    })
+                    
+                    await ws.send_json({
+                        "type": "hinglish_response",
+                        "response": response,
+                        "context": {"last_app": app_name},
+                        "command": command_text
+                    })
+                
+                elif intent == 'close_app':
+                    app_name = intent_data.get('app')
+                    response = hinglish_engine.get_hinglish_response('app_closing', {'app': app_name})
+                    
+                    # Execute app closing
+                    result = await asyncio.to_thread(router.execute_step, {
+                        'action': 'close_app',
+                        'args': {'app': app_name}
+                    })
+                    
+                    await ws.send_json({
+                        "type": "hinglish_response",
+                        "response": response,
+                        "context": {"last_app": app_name},
+                        "command": command_text
+                    })
+                
+                elif intent == 'greeting':
+                    response = hinglish_engine.get_hinglish_response('greeting_response', {})
+                    
+                    await ws.send_json({
+                        "type": "hinglish_response",
+                        "response": response,
+                        "context": context,
+                        "command": command_text
+                    })
+                
+                elif intent == 'send_message':
+                    contact = intent_data.get('contact')
+                    response = "OK Sir, kya message bhejna hai? Bataiye."
+                    
+                    await ws.send_json({
+                        "type": "hinglish_response",
+                        "response": response,
+                        "requires_confirmation": True,
+                        "pending_data": {"action": "send_message", "contact": contact},
+                        "context": {"pending_contact": contact},
+                        "command": command_text
+                    })
+                
+                else:  # Conversation/general response
+                    response = brain.generate_response(
+                        prompt=command_text,
+                        system_prompt="""You are SANDEEP, a personal AI assistant. 
+Respond in natural Hinglish (Hindi + English mix).
+Keep responses brief, friendly, and conversational.
+Examples: "Ji Sir, samajh gaya.", "Bilkul Sir, mail send kar diya.", "Haan Sir, ready hoon."
+Do NOT use formal Hindi or overly long responses."""
+                    )
+                    
+                    await ws.send_json({
+                        "type": "hinglish_response",
+                        "response": response,
+                        "context": context,
+                        "command": command_text
+                    })
+                
+                memory.add_history(command_text, response)
+                continue
+            
+            # ══════ LEGACY COMMAND HANDLER ════════════════════════════════════
             command = msg.get("command", "").strip()
             if not command:
                 continue
