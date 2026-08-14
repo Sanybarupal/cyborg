@@ -8,8 +8,14 @@ let ws = null;
 let recognition = null;
 let isListeningContinuous = true;
 let isSpeaking = false;
+let voiceState = 'idle';
+let wakeArmed = true;
+let pendingConfirmation = null;
 let scheduleItems = JSON.parse(localStorage.getItem('sandeep_schedule') || '[]');
 let currentAudio = null;
+let speechQueue = Promise.resolve();
+const WAKE_WORD = /\b(?:hey|hay)\s+sandeep\b/i;
+const DANGEROUS_COMMAND = /\b(delete|remove permanently|deploy|publish|push|shutdown|format|permanently)\b/i;
 
 // ── DOM Elements ───────────────────────────────────────────────────
 const $ = id => document.getElementById(id);
@@ -107,19 +113,6 @@ function initWebSocket() {
         try {
             const data = JSON.parse(e.data);
             handleServerEvent(data);
-            
-            // Auto-speak response text using TTS
-            if (data.text && 'speechSynthesis' in window) {
-                try {
-                    const utterance = new SpeechSynthesisUtterance(data.text);
-                    utterance.rate = 1.0;
-                    utterance.pitch = 1.0;
-                    utterance.volume = 1.0;
-                    speechSynthesis.speak(utterance);
-                } catch (ttsErr) {
-                    console.log('[TTS Error]:', ttsErr);
-                }
-            }
         } catch (err) {
             console.error('[WS Parse Error]:', err);
         }
@@ -149,7 +142,15 @@ function handleServerEvent(d) {
     switch (d.type) {
         case 'greeting':
             hudResponseText.textContent = d.text;
-            if (d.audio) playAudioResponse(d.audio);
+            setHUDState('IDLE // WAKE WORD READY', 'Say “Hey Sandeep” to activate');
+            wakeArmed = true;
+            break;
+
+        case 'hinglish_response':
+            hudResponseText.textContent = d.response || 'Samajh gaya, Sandeep.';
+            setHUDState('TASK COMPLETED', 'Voice response ready');
+            updateDiagnosticFlow('COMPLETED', 'done');
+            speakOnce(d.response || 'Samajh gaya, Sandeep.');
             break;
 
         case 'status':
@@ -160,7 +161,8 @@ function handleServerEvent(d) {
 
         case 'error':
             showSystemError(d.message || d.text);
-            setHUDState('SYSTEM ERROR', 'Task execution failed');
+            wakeArmed = true;
+            setHUDState('ERROR', 'Task execution failed');
             addErrorLog({
                 module: d.module || 'SYSTEM',
                 message: d.message || d.text,
@@ -205,13 +207,7 @@ function handleServerEvent(d) {
             setHUDState('TASK COMPLETED', 'All directives executed');
             updateDiagnosticFlow('COMPLETED', 'done');
 
-            if (d.audio) {
-                playAudioResponse(d.audio);
-            } else {
-                setTimeout(() => {
-                    setHUDState('SYSTEM ACTIVE // LISTENING', 'Continuous Voice Recognition Active — Speak your command');
-                }, 3000);
-            }
+            speakOnce(d.text || 'Done Sandeep. Task complete ho gaya hai.');
             fetchSystemStatus();
             break;
             
@@ -298,22 +294,30 @@ function initContinuousVoice() {
     recognition.lang = 'en-IN';
     recognition.continuous = false;
     recognition.interimResults = false;
+    recognition.maxAlternatives = 1;
 
     recognition.onstart = () => {
         micBtn.classList.add('active');
         setBadge('pillMic', true);
         if (!isSpeaking) {
-            setHUDState('SYSTEM ACTIVE // LISTENING', 'Continuous Voice Recognition Active — Speak your command');
+            setHUDState(wakeArmed ? 'IDLE // WAKE WORD READY' : 'LISTENING', wakeArmed ? 'Say “Hey Sandeep” to activate' : 'Listening for your command');
         }
     };
 
     recognition.onresult = (e) => {
-        const transcript = e.results[0][0].transcript;
-        if (transcript && transcript.trim()) {
-            console.log('[Heard]:', transcript);
-            hudCommandText.textContent = `"${transcript}"`;
-            sendCmd(transcript);
+        const transcript = e.results[0][0].transcript.trim();
+        if (!transcript) return;
+        hudCommandText.textContent = `"${transcript}"`;
+        const wakeMatch = transcript.match(WAKE_WORD);
+        if (wakeArmed) {
+            if (!wakeMatch) return;
+            const command = transcript.slice(wakeMatch.index + wakeMatch[0].length).replace(/^[,;:\s]+/, '').trim();
+            wakeArmed = false;
+            setHUDState('LISTENING', command ? 'Command captured after wake word' : 'Listening for your command');
+            if (command) sendCmd(command);
+            return;
         }
+        sendCmd(transcript);
     };
 
     recognition.onerror = (e) => {
@@ -349,43 +353,71 @@ function stopVoiceEngine() {
     } catch (e) {}
 }
 
-function playAudioResponse(url) {
-    isSpeaking = true;
-    stopVoiceEngine();
-    setHUDState('JARVIS SPEAKING', 'Delivering voice feedback');
-
-    if (currentAudio) {
-        currentAudio.pause();
-    }
-
-    currentAudio = new Audio(url);
-    currentAudio.play().catch(e => {
-        console.log('[Audio play failed - user interaction needed]:', e);
-    });
-
-    currentAudio.onended = () => {
-        isSpeaking = false;
-        setHUDState('SYSTEM ACTIVE // LISTENING', 'Continuous Voice Recognition Active — Speak your command');
-        if (isListeningContinuous) {
-            setTimeout(startVoiceEngine, 400);
-        }
-    };
+function speakOnce(text) {
+    if (!text || !('speechSynthesis' in window)) return;
+    speechQueue = speechQueue.then(() => new Promise(resolve => {
+        speechSynthesis.cancel();
+        isSpeaking = true;
+        stopVoiceEngine();
+        setHUDState('SPEAKING', 'Delivering voice feedback');
+        const utterance = new SpeechSynthesisUtterance(text);
+        utterance.lang = 'en-IN';
+        utterance.rate = 0.96;
+        utterance.pitch = 0.82;
+        utterance.volume = 1;
+        utterance.onend = () => {
+            isSpeaking = false;
+            wakeArmed = true;
+            setHUDState('IDLE // WAKE WORD READY', 'Say “Hey Sandeep” to activate');
+            if (isListeningContinuous) setTimeout(startVoiceEngine, 400);
+            resolve();
+        };
+        utterance.onerror = () => {
+            isSpeaking = false;
+            wakeArmed = true;
+            if (isListeningContinuous) setTimeout(startVoiceEngine, 400);
+            resolve();
+        };
+        speechSynthesis.speak(utterance);
+    }));
 }
 
 // ── Command Dispatcher ─────────────────────────────────────────────
 window.sendCmd = function(text) {
-    if (!text || !text.trim()) return;
+    const command = text?.trim();
+    if (!command) return;
+    if (pendingConfirmation) {
+        if (/^(yes|haan|ha|confirm|do it|kar do)\b/i.test(command)) {
+            const approved = pendingConfirmation;
+            pendingConfirmation = null;
+            dispatchCommand(approved);
+        } else if (/^(no|nahin|cancel|mat karo)\b/i.test(command)) {
+            pendingConfirmation = null;
+            speakOnce('Theek hai Sandeep, action cancel kar diya.');
+        }
+        return;
+    }
+    if (DANGEROUS_COMMAND.test(command)) {
+        pendingConfirmation = command;
+        hudCommandText.textContent = `"${command}"`;
+        hudResponseText.textContent = 'Confirmation required before this action.';
+        setHUDState('CONFIRMATION REQUIRED', 'Say “Yes” to continue or “No” to cancel');
+        speakOnce(`Sandeep, kya main ye action execute kar doon? Yes ya No boliye.`);
+        return;
+    }
+    dispatchCommand(command);
+};
+
+function dispatchCommand(command) {
     if (!ws || ws.readyState !== WebSocket.OPEN) {
         hudResponseText.textContent = 'System disconnected. Reconnecting...';
         return;
     }
-    
-    hudCommandText.textContent = `"${text.trim()}"`;
-    setHUDState('PROCESSING DIRECTIVE', 'Dispatching command to task router...');
-    ws.send(JSON.stringify({ command: text.trim() }));
+    wakeArmed = false;
+    hudCommandText.textContent = `"${command}"`;
+    setHUDState('THINKING', 'Understanding your voice command...');
+    ws.send(JSON.stringify({ command }));
     cmdInput.value = '';
-    hudCommandText.textContent = '';
-    hudResponseText.textContent = '';
 }
 
 // ── System Error Display ───────────────────────────────────────────
