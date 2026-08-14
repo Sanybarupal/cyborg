@@ -1,0 +1,11 @@
+{
+  "version": 2,
+  "builds": [
+    { "src": "sandeep/server.py", "use": "@vercel/python" },
+    { "src": "sandeep/static/**", "use": "@vercel/static" }
+  ],
+  "routes": [
+    { "src": "/static/(.*)", "dest": "/sandeep/static/$1" },
+    { "src": "/(.*)", "dest": "/sandeep/server.py" }
+  ]
+}

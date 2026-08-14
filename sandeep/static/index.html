@@ -168,10 +168,10 @@
                     </svg>
                     <div class="mic-glow-ring"></div>
                 </button>
-                <div class="text-input-wrapper">
-                    <input type="text" id="cmdInput" placeholder="Speak hands-free or type a command here..." autocomplete="off" spellcheck="false"/>
-                    <button class="send-trigger-btn" id="sendBtn" title="Execute Command">
-                        <svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
+                <div class="text-input-wrapper" hidden aria-hidden="true">
+                    <input type="text" id="cmdInput" tabindex="-1" placeholder="Voice commands only" autocomplete="off" spellcheck="false"/>
+                    <button class="send-trigger-btn" id="sendBtn" tabindex="-1" title="Execute Command">
+                        <svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20"><path d="M2.01 21L23 12 2.01 3 2 10l15-2-15 2z"/></svg>
                     </button>
                 </div>
             </div>

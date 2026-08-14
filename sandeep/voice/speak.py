@@ -21,8 +21,8 @@ except ImportError:
 AUDIO_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), "static", "audio")
 os.makedirs(AUDIO_DIR, exist_ok=True)
 
-# Primary voice (Microsoft Neural) — Indian English female
-VOICE_ONLINE = "en-IN-NeerjaNeural"
+# Primary voice (Microsoft Neural) — Indian English male
+VOICE_ONLINE = "en-IN-PrabhatNeural"
 
 
 async def generate_speech(text: str) -> str:
@@ -68,10 +68,11 @@ def _pyttsx3_save(text: str, filepath: str) -> bool:
     """Synchronous pyttsx3 save to file (runs in thread pool)."""
     try:
         engine = pyttsx3.init()
-        # Set a pleasant voice — prefer female
+        # Prefer a male fallback voice; never select voices explicitly marked female.
         voices = engine.getProperty("voices")
         for voice in voices:
-            if "zira" in voice.name.lower() or "female" in voice.name.lower() or "hazel" in voice.name.lower():
+            name = (voice.name or '').lower()
+            if 'female' not in name and any(token in name for token in ('male', 'david', 'mark', 'ravi', 'prabhat')):
                 engine.setProperty("voice", voice.id)
                 break
         engine.setProperty("rate", 165)   # Speed (words per minute)
