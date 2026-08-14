@@ -8,8 +8,11 @@ let ws = null;
 let recognition = null;
 let isListeningContinuous = true;
 let isSpeaking = false;
+let wakeWordDetected = false;
 let scheduleItems = JSON.parse(localStorage.getItem('sandeep_schedule') || '[]');
 let currentAudio = null;
+const WAKE_WORDS = ['hey sandeep', 'hay sandeep', 'hi sandeep', 'hii sandeep'];
+const WAKE_ACK = 'Ji Sir, main sun raha hoon.';
 
 // ── DOM Elements ───────────────────────────────────────────────────
 const $ = id => document.getElementById(id);
@@ -108,18 +111,6 @@ function initWebSocket() {
             const data = JSON.parse(e.data);
             handleServerEvent(data);
             
-            // Auto-speak response text using TTS
-            if (data.text && 'speechSynthesis' in window) {
-                try {
-                    const utterance = new SpeechSynthesisUtterance(data.text);
-                    utterance.rate = 1.0;
-                    utterance.pitch = 1.0;
-                    utterance.volume = 1.0;
-                    speechSynthesis.speak(utterance);
-                } catch (ttsErr) {
-                    console.log('[TTS Error]:', ttsErr);
-                }
-            }
         } catch (err) {
             console.error('[WS Parse Error]:', err);
         }
@@ -308,12 +299,24 @@ function initContinuousVoice() {
     };
 
     recognition.onresult = (e) => {
-        const transcript = e.results[0][0].transcript;
-        if (transcript && transcript.trim()) {
-            console.log('[Heard]:', transcript);
-            hudCommandText.textContent = `"${transcript}"`;
-            sendCmd(transcript);
+        const transcript = e.results[0][0].transcript.trim();
+        if (!transcript) return;
+        console.log('[v0] Heard:', transcript);
+        hudCommandText.textContent = `"${transcript}"`;
+
+        const normalized = transcript.toLowerCase();
+        const wakeIndex = WAKE_WORDS.findIndex(word => normalized.includes(word));
+        if (!wakeWordDetected) {
+            if (wakeIndex < 0) return;
+            wakeWordDetected = true;
+            const command = transcript.slice(wakeIndex >= 0 ? normalized.indexOf(WAKE_WORDS[wakeIndex]) + WAKE_WORDS[wakeIndex].length : 0).trim();
+            speakResponse(WAKE_ACK);
+            setHUDState('LISTENING FOR COMMAND', 'Wake word detected — speak your command');
+            if (command) sendCmd(command);
+            return;
         }
+        wakeWordDetected = false;
+        sendCmd(transcript);
     };
 
     recognition.onerror = (e) => {
@@ -347,6 +350,21 @@ function stopVoiceEngine() {
     try {
         recognition.stop();
     } catch (e) {}
+}
+
+function speakResponse(text) {
+    if (!text || !('speechSynthesis' in window)) return;
+    speechSynthesis.cancel();
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.rate = 0.9;
+    utterance.pitch = 0.85;
+    utterance.volume = 1;
+    const voices = speechSynthesis.getVoices();
+    const male = voices.find(v => /male|david|mark|guy|ravi|prabhat/i.test(`${v.name} ${v.voiceURI}`)) || voices.find(v => /en-IN|hi-IN/i.test(v.lang));
+    if (male) utterance.voice = male;
+    utterance.onstart = () => { isSpeaking = true; setHUDState('SPEAKING', 'Voice response in progress'); stopVoiceEngine(); };
+    utterance.onend = () => { isSpeaking = false; if (isListeningContinuous) { setHUDState('SYSTEM ACTIVE // LISTENING', 'Continuous Voice Recognition Active — Speak your command'); setTimeout(startVoiceEngine, 400); } };
+    speechSynthesis.speak(utterance);
 }
 
 function playAudioResponse(url) {

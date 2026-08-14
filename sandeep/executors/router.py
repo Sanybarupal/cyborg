@@ -95,11 +95,14 @@ class ToolRouter:
 
     def _browser_open(self, url: str) -> dict:
         import subprocess
+        import webbrowser
         if not url:
             return {"success": False, "message": "No URL provided."}
         if not url.startswith("http"):
             url = "https://" + url
         try:
+            if __import__('os').name != 'nt':
+                return {"success": True, "message": f"Web-safe mode acknowledged URL: {url}. Open it from the browser UI."}
             safe_url = url.replace("'", "''")
             subprocess.run(
                 ["powershell", "-WindowStyle", "Hidden", "-Command", f"Start-Process '{safe_url}'"],

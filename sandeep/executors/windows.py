@@ -141,6 +141,12 @@ class WindowsExecutor:
     }
 
     def execute(self, action: str, target: str = None) -> dict:
+        if os.name != 'nt':
+            return {
+                'success': False,
+                'message': f"Windows desktop action '{action}' is unavailable in this web deployment.",
+                'fix': 'Run the SANDEEP local Windows agent for desktop control.'
+            }
         method = getattr(self, action, None)
         if method:
             return method(target)
