@@ -664,6 +664,7 @@ html, body {
 }
 
 .text-input-wrapper {
+    display: none;
     flex: 1;
     display: flex;
     align-items: center;

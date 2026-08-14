@@ -320,7 +320,13 @@ function initContinuousVoice() {
     };
 
     recognition.onerror = (e) => {
-        console.log('[Speech Error]:', e.error);
+        console.log('[v0] Speech Error:', e.error);
+        if (e.error === 'not-allowed' || e.error === 'service-not-allowed') {
+            isListeningContinuous = false;
+            wakeWordDetected = false;
+            setBadge('pillMic', false);
+            setHUDState('MICROPHONE PERMISSION REQUIRED', 'Tap the microphone and allow browser access to continue');
+        }
     };
 
     recognition.onend = () => {
