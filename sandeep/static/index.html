@@ -3,204 +3,40 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SANDEEP // Jarvis AI System</title>
-    <meta name="description" content="SANDEEP - Personal Jarvis-Style AI Command Center">
+    <title>SANDEEP // Operator Console</title>
+    <meta name="description" content="SANDEEP operator console for planning, executing, and verifying desktop tasks.">
     <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700;800;900&family=Rajdhani:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/static/style.css">
 </head>
 <body>
-    <!-- Background Canvas & Grid Glow -->
-    <div class="hud-bg">
-        <div class="hud-grid"></div>
-        <div class="hud-radial radial-1"></div>
-        <div class="hud-radial radial-2"></div>
-        <canvas id="particleCanvas"></canvas>
-    </div>
-
-    <!-- ═══ TOP STATUS BAR ═══ -->
-    <!-- ENHANCED: Voice and Button Input Controls -->
+    <div class="hud-bg" aria-hidden="true"><div class="hud-grid"></div><canvas id="particleCanvas"></canvas></div>
     <header class="topbar">
-        <div class="topbar-left">
-            <span class="brand-logo">SANDEEP</span>
-            <span class="brand-subtitle">JARVIS OS // V2.0</span>
-        </div>
-        <div class="topbar-center">
-            <div class="status-badge online" id="pillAI"><span class="badge-dot"></span>AI CORE</div>
-            <div class="status-badge online" id="pillVoice"><span class="badge-dot"></span>VOICE ENGINE</div>
-            <div class="status-badge online" id="pillAgent"><span class="badge-dot"></span>WIN AGENT</div>
-            <div class="status-badge online" id="pillMic"><span class="badge-dot"></span>MIC READY</div>
-        </div>
-        <div class="topbar-right">
-            <div class="clock-display" id="clock">--:--:--</div>
-        </div>
+        <div class="brand-lockup"><span class="brand-mark">S</span><div><div class="brand-logo">SANDEEP</div><div class="brand-subtitle">OPERATOR CONSOLE / LOCAL NODE</div></div></div>
+        <div class="header-meta"><span class="connection-pill" id="pillAI"><i></i><b>AI CORE</b><span>ONLINE</span></span><span class="connection-pill" id="pillAgent"><i></i><b>DESKTOP AGENT</b><span>READY</span></span><span class="clock-display" id="clock">--:--:--</span></div>
     </header>
-
-    <!-- ═══ THREE-COLUMN JARVIS HUD LAYOUT ═══ -->
-    <main class="hud-layout">
-
-        <!-- ── LEFT PANEL: REAL SYSTEM TELEMETRY, HEALTH & QUICK ACTIONS ── -->
-        <aside class="hud-panel hud-panel-left">
-            <div class="panel-section-title">
-                <span class="title-icon">⚡</span> SYSTEM TELEMETRY
-            </div>
-            <div class="telemetry-box" id="telemetryBox">
-                <!-- Keep small CPU/RAM meters if we want, or replace entirely. The prompt asked for "Create a dedicated left-side panel". Let's put the meters then the health. -->
-                <div class="meter-row"><div class="meter-head"><span class="meter-label">CPU LOAD</span><span class="meter-value" id="cpuVal">0%</span></div><div class="meter-track"><div class="meter-bar meter-cyan" id="cpuFill" style="width:0%"></div></div></div>
-                <div class="meter-row"><div class="meter-head"><span class="meter-label">MEMORY (RAM)</span><span class="meter-value" id="ramVal">0%</span></div><div class="meter-track"><div class="meter-bar meter-green" id="ramFill" style="width:0%"></div></div></div>
-                <div class="meter-row"><div class="meter-head"><span class="meter-label">STORAGE (C:)</span><span class="meter-value" id="diskVal">0%</span></div><div class="meter-track"><div class="meter-bar meter-amber" id="diskFill" style="width:0%"></div></div></div>
-                <div class="meter-row"><div class="meter-head"><span class="meter-label">BATTERY</span><span class="meter-value" id="battVal">100%</span></div><div class="meter-track"><div class="meter-bar meter-cyan" id="battFill" style="width:100%"></div></div></div>
-            </div>
-
-            <div class="panel-section-title" style="margin-top:20px;">
-                <span class="title-icon">🏥</span> SYSTEM HEALTH & ERRORS
-            </div>
-            <div class="system-health-grid" id="systemHealthGrid">
-                <!-- Modules will be populated by JS: Microphone, STT, AI, Backend, Agent, etc. -->
-                <div class="health-item"><span class="h-dot h-gray" id="h_mic"></span> Microphone</div>
-                <div class="health-item"><span class="h-dot h-gray" id="h_stt"></span> STT / Voice</div>
-                <div class="health-item"><span class="h-dot h-gray" id="h_tts"></span> TTS Engine</div>
-                <div class="health-item"><span class="h-dot h-gray" id="h_ai"></span> AI Core</div>
-                <div class="health-item"><span class="h-dot h-gray" id="h_backend"></span> Backend</div>
-                <div class="health-item"><span class="h-dot h-gray" id="h_router"></span> Tool Router</div>
-                <div class="health-item"><span class="h-dot h-gray" id="h_agent"></span> Windows Agent</div>
-                <div class="health-item"><span class="h-dot h-gray" id="h_quick"></span> Quick Actions</div>
-                <div class="health-item"><span class="h-dot h-gray" id="h_browser"></span> Browser Auto</div>
-                <div class="health-item"><span class="h-dot h-gray" id="h_ocr"></span> Screen/OCR</div>
-                <div class="health-item"><span class="h-dot h-gray" id="h_fs"></span> File System</div>
-                <div class="health-item"><span class="h-dot h-gray" id="h_sys"></span> Overall System</div>
-            </div>
-
-            <div class="panel-section-title" style="margin-top:20px;">
-                <span class="title-icon">⚡</span> QUICK ACTIONS
-            </div>
-            <div class="quick-directives-grid">
-                <button class="quick-btn" onclick="sendCmd('WhatsApp kholo')">Open WhatsApp</button>
-                <button class="quick-btn" onclick="sendCmd('YouTube open karo')">Open YouTube</button>
-                <button class="quick-btn" onclick="sendCmd('Chrome kholo')">Open Chrome</button>
-                <button class="quick-btn" onclick="sendCmd('Notepad open karo')">Open Notepad</button>
-                <button class="quick-btn" onclick="sendCmd('VS Code kholo')">Open VS Code</button>
-                <button class="quick-btn" onclick="sendCmd('System status batao')">System Status</button>
-            </div>
-
-            <div class="panel-section-title" style="margin-top:20px;">
-                <span class="title-icon">◈</span> RECENT ACTIONS & TASKS
-            </div>
-            <div class="recent-actions-list" id="recentActionsList">
-                <div class="action-entry">
-                    <span class="action-time">--:--</span>
-                    <span class="action-text">System initializing...</span>
-                </div>
-            </div>
-
-            <div class="panel-section-title" style="margin-top:20px;">
-                <span class="title-icon">❖</span> ACTIVE PROCESSES
-            </div>
-            <div class="process-tags-list" id="appList">
-                <span class="tag-empty">Scanning processes...</span>
-            </div>
+    <main class="console-layout">
+        <aside class="rail left-rail">
+            <section class="rail-section"><div class="section-label"><span>01</span> SYSTEM HEALTH</div><div class="health-grid" id="systemHealthGrid">
+                <div class="health-item"><i id="h_backend"></i><span>Backend</span><b>OK</b></div><div class="health-item"><i id="h_ai"></i><span>AI Core</span><b>OK</b></div><div class="health-item"><i id="h_agent"></i><span>Desktop Agent</span><b>OK</b></div><div class="health-item"><i id="h_router"></i><span>Tool Router</span><b>OK</b></div><div class="health-item"><i id="h_mic"></i><span>Microphone</span><b>READY</b></div><div class="health-item"><i id="h_tts"></i><span>Voice Output</span><b>READY</b></div>
+            </div></section>
+            <section class="rail-section"><div class="section-label"><span>02</span> TELEMETRY</div><div class="telemetry-box"><div class="meter-row"><div><span>CPU LOAD</span><strong id="cpuVal">0%</strong></div><div class="meter-track"><i id="cpuFill"></i></div></div><div class="meter-row"><div><span>MEMORY</span><strong id="ramVal">0%</strong></div><div class="meter-track"><i id="ramFill"></i></div></div><div class="meter-row"><div><span>STORAGE</span><strong id="diskVal">0%</strong></div><div class="meter-track"><i id="diskFill"></i></div></div></div></section>
+            <section class="rail-section"><div class="section-label"><span>03</span> ACTIVE PROCESSES</div><div class="process-tags-list" id="appList"><span class="muted">Scanning processes...</span></div></section>
+            <section class="rail-section recent-section"><div class="section-label"><span>04</span> RECENT ACTIONS</div><div class="recent-actions-list" id="recentActionsList"><div class="action-entry"><span class="action-time">--:--</span><span>Awaiting first directive</span></div></div></section>
         </aside>
-
-        <!-- ── CENTER: PROMINENT LARGE JARVIS CORE & COMMAND HUD ── -->
-        <section class="hud-center">
-            
-            <!-- Large Holographic Arc Reactor / Core -->
-            <div class="reactor-container">
-                <div class="reactor-wrapper" id="reactorCore">
-                    <div class="reactor-ring ring-outer"></div>
-                    <div class="reactor-ring ring-radar"></div>
-                    <div class="reactor-ring ring-mid"></div>
-                    <div class="reactor-ring ring-inner"></div>
-                    <div class="reactor-core-orb"></div>
-                    
-                    <!-- Soundwave Visualizer Bars -->
-                    <div class="voice-waveform" id="voiceWaveform">
-                        <span></span><span></span><span></span><span></span><span></span>
-                        <span></span><span></span><span></span><span></span><span></span>
-                        <span></span><span></span><span></span><span></span><span></span>
-                    </div>
-                </div>
-                
-                <!-- HUD AI Status -->
-                <div class="hud-status-badge" id="aiStatusBadge">
-                    <span class="status-indicator-dot"></span>
-                    <span id="aiState">SYSTEM ACTIVE // LISTENING</span>
-                </div>
-                <div class="hud-status-sub" id="aiStateSub">Continuous Voice Recognition Active — Speak your command</div>
-                
-                <!-- NEW: Error Display Box -->
-                <div id="hudErrorBox" class="hud-error-box" style="display: none;">
-                    <div class="error-header">⚠️ SYSTEM ALERT</div>
-                    <div class="error-message" id="hudErrorMessage">No errors.</div>
-                </div>
-            </div>
-
-            <!-- Holographic Command & Response HUD Display -->
-            <div class="hud-display-box" id="hudDisplayBox">
-                <div class="hud-command-preview" id="hudCommandPreview">
-                    <span class="hud-prefix">HEARD DIRECTIVE &gt;</span>
-                    <span class="hud-command-text" id="hudCommandText">"Waiting for command..."</span>
-                </div>
-
-                <div class="hud-response-preview" id="hudResponsePreview">
-                    <span class="hud-prefix">JARVIS RESPONSE &gt;</span>
-                    <span class="hud-response-text" id="hudResponseText">All systems nominal. How may I assist you, Sandeep?</span>
-                </div>
-
-                <!-- Step Execution Tracker (Diagnostics) -->
-                <div class="hud-task-tracker" id="taskTracker" style="display:none;">
-                    <div class="tracker-header">
-                        <span class="tracker-title" id="ttTitle">COMMAND DIAGNOSTICS</span>
-                    </div>
-                    <div class="diagnostic-flow" id="diagFlow">
-                        <!-- e.g. LISTENING -> COMMAND RECEIVED -> UNDERSTANDING -> TOOL -> WINDOWS AGENT -> VERIFYING -> COMPLETED -->
-                    </div>
-                    <div class="tracker-step-desc" id="ttStep" style="margin-top:10px;">Processing...</div>
-                </div>
-            </div>
-
-            <!-- Bottom Floating Command Dock -->
-            <div class="hud-bottom-dock">
-                <button class="voice-trigger-btn active" id="micBtn" title="Microphone Active (Continuous Listening)">
-                    <svg viewBox="0 0 24 24" fill="currentColor" width="26" height="26">
-                        <path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3z"/>
-                        <path d="M17 11c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"/>
-                    </svg>
-                    <div class="mic-glow-ring"></div>
-                </button>
-                <div class="text-input-wrapper">
-                    <input type="text" id="cmdInput" placeholder="Speak hands-free or type a command here..." autocomplete="off" spellcheck="false"/>
-                    <button class="send-trigger-btn" id="sendBtn" title="Execute Command">
-                        <svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
-                    </button>
-                </div>
-            </div>
+        <section class="workspace">
+            <div class="workspace-heading"><div><span class="eyebrow">COMMAND CENTER</span><h1>What should I execute?</h1><p>Give SANDEEP a directive. It will plan, act, verify, and report.</p></div><div class="mode-chip"><i></i><span id="modeText">IDLE / READY</span></div></div>
+            <div class="core-stage"><div class="reactor-wrapper" id="reactorCore"><div class="reactor-ring ring-outer"></div><div class="reactor-ring ring-mid"></div><div class="reactor-ring ring-inner"></div><div class="reactor-core-orb"></div><div class="voice-waveform" id="voiceWaveform"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></div></div><div class="core-caption"><span class="status-indicator-dot"></span><strong id="aiState">SYSTEM ACTIVE</strong><span id="aiStateSub">Ready for a new directive</span></div></div>
+            <div class="command-card"><div class="card-kicker"><span>DIRECTIVE INPUT</span><span class="shortcut">ENTER TO SEND</span></div><div class="command-row"><button class="voice-trigger-btn" id="micBtn" title="Toggle microphone" aria-label="Toggle microphone"><span class="mic-icon">●</span></button><input type="text" id="cmdInput" placeholder="Type a directive, e.g. open Chrome and search for..." autocomplete="off" spellcheck="false"><button class="send-trigger-btn" id="sendBtn" aria-label="Execute directive">RUN <span>↗</span></button></div><div class="quick-row"><span>TRY</span><button class="quick-btn" data-command="System status batao">system status</button><button class="quick-btn" data-command="Chrome kholo">open Chrome</button><button class="quick-btn" data-command="Notepad open karo">open Notepad</button><button class="quick-btn" data-command="YouTube open karo">open YouTube</button></div></div>
+            <div class="execution-card" id="taskTracker" hidden><div class="execution-header"><span>EXECUTION PLAN</span><strong id="ttTitle">COMMAND PIPELINE</strong></div><div class="diagnostic-flow" id="diagFlow"></div><div class="tracker-step-desc" id="ttStep">Preparing...</div></div>
+            <div class="response-card"><div class="card-kicker"><span>LAST RESPONSE</span><span id="responseTime">LIVE</span></div><p id="hudResponseText">All systems nominal. Give me a directive when you are ready.</p><div id="hudErrorBox" class="error-banner" hidden><strong>SYSTEM ALERT</strong><span id="hudErrorMessage"></span></div></div>
         </section>
-
-        <!-- ── RIGHT PANEL: SCHEDULE & DIRECTIVES ── -->
-        <aside class="hud-panel hud-panel-right">
-            <div class="panel-section-title">
-                <span class="title-icon">📋</span> SCHEDULE & DIRECTIVES
-            </div>
-            <div class="schedule-container" id="scheduleList">
-                <div class="sched-empty">No active directives</div>
-            </div>
-            <div class="sched-add-bar">
-                <input type="text" id="schedInput" placeholder="Add a directive or task..." />
-                <button id="schedAddBtn" title="Add Directive">+</button>
-            </div>
-
-            <div class="panel-section-title" style="margin-top:20px;">
-                <span class="title-icon">🛑</span> SYSTEM ERROR LOGS
-            </div>
-            <div class="error-logs-container" id="errorLogsContainer">
-                <!-- Errors will inject here -->
-                <div class="sched-empty">No critical system errors.</div>
-            </div>
+        <aside class="rail right-rail">
+            <section class="rail-section"><div class="section-label"><span>05</span> TASK QUEUE <em id="queueCount">0</em></div><div class="schedule-container" id="scheduleList"><div class="empty-state">No queued directives<br><small>Add a task below to track it.</small></div></div><div class="add-task"><input type="text" id="schedInput" placeholder="Add a task to queue"><button id="schedAddBtn" aria-label="Add task">+</button></div></section>
+            <section class="rail-section memory-section"><div class="section-label"><span>06</span> CONTEXT & MEMORY</div><div class="memory-card"><span class="memory-status"><i></i> CONTEXT LOADED</span><p>SANDEEP is operating in local desktop mode. Tasks are verified before completion is reported.</p><div class="memory-tags"><span>local node</span><span>desktop control</span><span>verification on</span></div></div></section>
+            <section class="rail-section"><div class="section-label"><span>07</span> ERROR LOG <em id="errorCount">0</em></div><div class="error-logs-container" id="errorLogsContainer"><div class="empty-state">No unresolved errors.</div></div></section>
         </aside>
-
     </main>
-
     <script src="/static/app.js"></script>
 </body>
 </html>

@@ -111,8 +111,9 @@ async def system_status():
             "apps": sorted(list(notable))[:10],
             "recent_actions": recent_actions[:8]
         }
-    except ImportError:
-        return {"cpu": 0, "ram": 0, "disk": 0, "battery": None, "apps": [], "recent_actions": recent_actions[:8]}
+    except Exception as exc:
+        print(f"[STATUS] telemetry unavailable: {exc}")
+        return {"cpu": 0, "ram": 0, "disk": 0, "battery": None, "apps": [], "recent_actions": recent_actions[:8], "error": "Telemetry unavailable"}
 
 
 @app.websocket("/ws")
