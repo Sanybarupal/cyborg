@@ -612,6 +612,17 @@ html, body {
     color: var(--txt-dim);
 }
 
+/* ── Voice-first dock ───────────────────────────────────────────── */
+.voice-mode-label {
+    flex: 1;
+    color: var(--txt-dim);
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 1px;
+    text-align: right;
+}
+.voice-debug-input { display: none !important; }
+
 /* ── Bottom Command Dock ─────────────────────────────────────────── */
 .hud-bottom-dock {
     width: 100%;

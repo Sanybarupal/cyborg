@@ -4,7 +4,7 @@
   "private": true,
   "description": "Preview launcher for the existing SANDEEP FastAPI application",
   "scripts": {
-    "start": "sandeep/.audit-venv/bin/python sandeep/server.py",
-    "dev": "sandeep/.audit-venv/bin/python sandeep/server.py"
+    "start": "python3 sandeep/server.py",
+    "dev": "python3 sandeep/server.py"
   }
 }
